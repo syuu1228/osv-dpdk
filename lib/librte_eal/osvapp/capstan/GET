@@ -1,0 +1,22 @@
+#!/bin/sh -e
+
+export RTE_SDK=`readlink -f ../../../..`
+export RTE_TARGET=x86_64-native-osvapp-gcc
+OSV_SDK=`readlink -f osv`
+OSV_VER=v0.19
+
+if [ ! -e $OSV_SDK ]; then
+    git clone -b $OSV_VER --depth 1 https://github.com/cloudius-systems/osv
+fi
+cd $RTE_SDK 
+make install T=$RTE_TARGET OSV_SDK=$OSV_SDK
+(cd examples/cmdline; make)
+(cd examples/helloworld; make)
+(cd examples/ip_fragmentation; make)
+(cd examples/l2fwd; make)
+(cd examples/l3fwd; make)
+cd -
+mkdir -p ROOTFS
+find $RTE_SDK/x86_64-native-osvapp-gcc/app/ -executable -readable -type f -exec cp -a {} ROOTFS/ \;
+find $RTE_SDK/examples/*/build/app -executable -readable -type f -exec cp -a {} ROOTFS/ \;
+cp -fa $RTE_SDK/x86_64-native-osvapp-gcc/lib/libintel_dpdk.so ROOTFS/
