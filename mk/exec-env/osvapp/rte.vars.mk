@@ -29,13 +29,34 @@
 #   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-include $(RTE_SDK)/mk/rte.vars.mk
+#
+# exec-env:
+#
+#   - define EXECENV_CFLAGS variable (overriden by cmdline)
+#   - define EXECENV_LDFLAGS variable (overriden by cmdline)
+#   - define EXECENV_ASFLAGS variable (overriden by cmdline)
+#   - may override any previously defined variable
+#
+# examples for RTE_EXEC_ENV: linuxapp, bsdapp
+#
+EXECENV_CFLAGS  = -pthread -fPIC -shared
 
-DIRS-$(CONFIG_RTE_LIBRTE_EAL_LINUXAPP) += common
-DIRS-$(CONFIG_RTE_LIBRTE_EAL_LINUXAPP) += linuxapp
-DIRS-$(CONFIG_RTE_LIBRTE_EAL_BSDAPP) += common
-DIRS-$(CONFIG_RTE_LIBRTE_EAL_BSDAPP) += bsdapp
-DIRS-$(CONFIG_RTE_LIBRTE_EAL_OSVAPP) += common
-DIRS-$(CONFIG_RTE_LIBRTE_EAL_OSVAPP) += osvapp
+# Workaround lack of DT_NEEDED entry
+EXECENV_LDFLAGS = --no-as-needed
 
-include $(RTE_SDK)/mk/rte.subdir.mk
+EXECENV_LDLIBS  = -lrt -lm
+EXECENV_ASFLAGS =
+
+ifeq ($(RTE_BUILD_SHARED_LIB),y)
+EXECENV_LDLIBS += -lgcc_s
+endif
+
+# force applications to link with gcc/icc instead of using ld
+LINK_USING_CC := 1
+
+# For shared libraries
+EXECENV_LDFLAGS += -export-dynamic
+# Add library to the group to resolve symbols
+EXECENV_LDLIBS  += -ldl
+
+export EXECENV_CFLAGS EXECENV_LDFLAGS EXECENV_ASFLAGS EXECENV_LDLIBS
