@@ -50,6 +50,7 @@
 
 #include "eal_private.h"
 
+#if 0
 /*
  * default log function, used once mempool (hence log history) is
  * available
@@ -111,14 +112,16 @@ static cookie_io_functions_t console_log_func = {
 	.seek  = console_log_seek,
 	.close = console_log_close
 };
+#endif
 
 /*
  * set the log to default function, called during eal init process,
  * once memzones are available.
  */
 int
-rte_eal_log_init(const char *id, int facility)
+rte_eal_log_init(__attribute__((unused)) const char *id, __attribute__((unused)) int facility)
 {
+#if 0
 	FILE *log_stream;
 
 	log_stream = fopencookie(NULL, "w+", console_log_func);
@@ -129,12 +132,16 @@ rte_eal_log_init(const char *id, int facility)
 
 	if (rte_eal_common_log_init(log_stream) < 0)
 		return -1;
+#endif
+	if (rte_eal_common_log_init(stdout) < 0)
+		return -1;
 
 	return 0;
 }
 
 /* early logs */
 
+#if 0
 /*
  * early log function, used during boot when mempool (hence log
  * history) is not available
@@ -179,6 +186,7 @@ static cookie_io_functions_t early_log_func = {
 	.close = early_log_close
 };
 static FILE *early_log_stream;
+#endif
 
 /*
  * init the log library, called by rte_eal_init() to enable early
@@ -187,11 +195,14 @@ static FILE *early_log_stream;
 int
 rte_eal_log_early_init(void)
 {
+#if 0
 	early_log_stream = fopencookie(NULL, "w+", early_log_func);
 	if (early_log_stream == NULL) {
 		printf("Cannot configure early_log_stream\n");
 		return -1;
 	}
 	rte_openlog_stream(early_log_stream);
+#endif
+	rte_openlog_stream(stdout);
 	return 0;
 }
