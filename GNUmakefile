@@ -33,6 +33,10 @@
 # Head Makefile for compiling rte SDK
 #
 
+.PHONY: module
+module:
+	./build.sh
+
 RTE_SDK := $(CURDIR)
 export RTE_SDK
 
