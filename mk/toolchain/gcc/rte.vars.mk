@@ -39,6 +39,7 @@
 #
 
 CC        = $(CROSS)gcc
+CXX       = $(CROSS)g++
 KERNELCC  = $(CROSS)gcc
 CPP       = $(CROSS)cpp
 # for now, we don't use as but nasm.
@@ -54,8 +55,10 @@ GCOV      = $(CROSS)gcov
 
 ifeq ("$(origin CC)", "command line")
 HOSTCC    = $(CC)
+HOSTCXX   = $(CXX)
 else
 HOSTCC    = gcc
+HOSTCXX   = gxx
 endif
 HOSTAS    = as
 
@@ -80,5 +83,5 @@ WERROR_FLAGS += -Wundef -Wwrite-strings
 # process cpu flags
 include $(RTE_SDK)/mk/toolchain/$(RTE_TOOLCHAIN)/rte.toolchain-compat.mk
 
-export CC AS AR LD OBJCOPY OBJDUMP STRIP READELF
+export CC CXX AS AR LD OBJCOPY OBJDUMP STRIP READELF
 export TOOLCHAIN_CFLAGS TOOLCHAIN_LDFLAGS TOOLCHAIN_ASFLAGS

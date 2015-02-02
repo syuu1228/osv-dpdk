@@ -43,6 +43,7 @@ GCC_MAJOR_VERSION = $(shell $(CC) -dumpversion | cut -f1 -d.)
 # if GCC is not 4.x
 ifneq ($(GCC_MAJOR_VERSION),4)
 	MACHINE_CFLAGS =
+	MACHINE_CXXFLAGS =
 $(warning You are not using GCC 4.x. This is neither supported, nor tested.)
 
 
@@ -60,30 +61,42 @@ else
 	ifeq ($(shell test $(GCC_MINOR_VERSION) -le 7 && echo 1), 1)
 		MACHINE_CFLAGS := $(patsubst -march=core-avx-i,-march=corei7-avx,$(MACHINE_CFLAGS))
 		MACHINE_CFLAGS := $(patsubst -march=core-avx2,-march=core-avx2,$(MACHINE_CFLAGS))
+		MACHINE_CXXFLAGS := $(patsubst -march=core-avx-i,-march=corei7-avx,$(MACHINE_CFLAGS))
+		MACHINE_CXXFLAGS := $(patsubst -march=core-avx2,-march=core-avx2,$(MACHINE_CFLAGS))
 	endif
 	ifeq ($(shell test $(GCC_MINOR_VERSION) -lt 6 && echo 1), 1)
 		MACHINE_CFLAGS := $(patsubst -march=corei7-avx,-march=core2 -maes -mpclmul -mavx,$(MACHINE_CFLAGS))
 		MACHINE_CFLAGS := $(patsubst -march=corei7,-march=core2 -maes -mpclmul,$(MACHINE_CFLAGS))
+		MACHINE_CXXFLAGS := $(patsubst -march=corei7-avx,-march=core2 -maes -mpclmul -mavx,$(MACHINE_CFLAGS))
+		MACHINE_CXXFLAGS := $(patsubst -march=corei7,-march=core2 -maes -mpclmul,$(MACHINE_CFLAGS))
 	endif
 	ifeq ($(shell test $(GCC_MINOR_VERSION) -lt 5 && echo 1), 1)
 		MACHINE_CFLAGS := $(patsubst -march=atom,-march=core2 -mssse3,$(MACHINE_CFLAGS))
+		MACHINE_CXXFLAGS := $(patsubst -march=atom,-march=core2 -mssse3,$(MACHINE_CFLAGS))
 	endif
 	ifeq ($(shell test $(GCC_MINOR_VERSION) -lt 4 && echo 1), 1)
 		MACHINE_CFLAGS := $(filter-out -mavx -mpclmul -maes,$(MACHINE_CFLAGS))
+		MACHINE_CXXFLAGS := $(filter-out -mavx -mpclmul -maes,$(MACHINE_CFLAGS))
 		ifneq ($(findstring SSE4_2, $(CPUFLAGS)),)
 			MACHINE_CFLAGS += -msse4.2
+			MACHINE_CXXFLAGS += -msse4.2
 		endif
 		ifneq ($(findstring SSE4_1, $(CPUFLAGS)),)
 			MACHINE_CFLAGS += -msse4.1
+			MACHINE_CXXFLAGS += -msse4.1
 		endif
 	endif
 	ifeq ($(shell test $(GCC_MINOR_VERSION) -lt 3 && echo 1), 1)
 		MACHINE_CFLAGS := $(filter-out -msse% -mssse%,$(MACHINE_CFLAGS))
 		MACHINE_CFLAGS := $(patsubst -march=core2,-march=generic,$(MACHINE_CFLAGS))
 		MACHINE_CFLAGS += -msse3
+		MACHINE_CXXFLAGS := $(filter-out -msse% -mssse%,$(MACHINE_CFLAGS))
+		MACHINE_CXXFLAGS := $(patsubst -march=core2,-march=generic,$(MACHINE_CFLAGS))
+		MACHINE_CXXFLAGS += -msse3
 	endif
 	ifeq ($(shell test $(GCC_MINOR_VERSION) -lt 2 && echo 1), 1)
 		MACHINE_CFLAGS := $(filter-out -march% -mtune% -msse%,$(MACHINE_CFLAGS))
+		MACHINE_CXXFLAGS := $(filter-out -march% -mtune% -msse%,$(MACHINE_CFLAGS))
 	endif
 endif
 
