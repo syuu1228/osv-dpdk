@@ -37,7 +37,7 @@ SRCS-all := $(SRCS-y) $(SRCS-n) $(SRCS-)
 
 # convert source to obj file
 src2obj = $(strip $(patsubst %.c,%.o,\
-	$(patsubst %.S,%_s.o,$(1))))
+	$(patsubst %.S,%_s.o,$(patsubst %.cc,%.o,$(1)))))
 
 # add a dot in front of the file name
 dotfile = $(strip $(foreach f,$(1),\
@@ -46,12 +46,12 @@ dotfile = $(strip $(foreach f,$(1),\
 # convert source/obj files into dot-dep filename (does not
 # include .S files)
 src2dep = $(strip $(call dotfile,$(patsubst %.c,%.o.d, \
-		$(patsubst %.S,,$(1)))))
+		$(patsubst %.S,,$(patsubst %.cc,%.o.d,$(1))))))
 obj2dep = $(strip $(call dotfile,$(patsubst %.o,%.o.d,$(1))))
 
 # convert source/obj files into dot-cmd filename
 src2cmd = $(strip $(call dotfile,$(patsubst %.c,%.o.cmd, \
-		$(patsubst %.S,%_s.o.cmd,$(1)))))
+		$(patsubst %.S,%_s.o.cmd,$(patsubst %.cc,%.o.cmd,$(1))))))
 obj2cmd = $(strip $(call dotfile,$(patsubst %.o,%.o.cmd,$(1))))
 
 OBJS-y := $(call src2obj,$(SRCS-y))
@@ -78,17 +78,32 @@ C_TO_O = $(HOSTCC) -Wp,-MD,$(call obj2dep,$(@)).tmp $(HOST_CFLAGS) \
 	$(CFLAGS_$(@)) $(HOST_EXTRA_CFLAGS) -o $@ -c $<
 C_TO_O_STR = $(subst ','\'',$(C_TO_O)) #'# fix syntax highlight
 C_TO_O_DISP = $(if $(V),"$(C_TO_O_STR)","  HOSTCC $(@)")
+CXX_TO_O = $(HOSTCXX) -Wp,-MD,$(call obj2dep,$(@)).tmp $(HOST_CXXFLAGS) \
+	$(CXXFLAGS_$(@)) $(HOST_EXTRA_CXXFLAGS) -o $@ -c $<
+CXX_TO_O_STR = $(subst ','\'',$(CXX_TO_O)) #'# fix syntax highlight
+CXX_TO_O_DISP = $(if $(V),"$(CXX_TO_O_STR)","  HOSTCXX $(@)")
 else
 C_TO_O = $(CC) -Wp,-MD,$(call obj2dep,$(@)).tmp $(CFLAGS) \
 	$(CFLAGS_$(@)) $(EXTRA_CFLAGS) -o $@ -c $<
 C_TO_O_STR = $(subst ','\'',$(C_TO_O)) #'# fix syntax highlight
 C_TO_O_DISP = $(if $(V),"$(C_TO_O_STR)","  CC $(@)")
+CXX_TO_O = $(CXX) -Wp,-MD,$(call obj2dep,$(@)).tmp $(CXXFLAGS) \
+	$(CXXFLAGS_$(@)) $(EXTRA_CXXFLAGS) -o $@ -c $<
+CXX_TO_O_STR = $(subst ','\'',$(CXX_TO_O)) #'# fix syntax highlight
+CXX_TO_O_DISP = $(if $(V),"$(CXX_TO_O_STR)","  CXX $(@)")
 endif
 C_TO_O_CMD = 'cmd_$@ = $(C_TO_O_STR)'
 C_TO_O_DO = @set -e; \
 	echo $(C_TO_O_DISP); \
 	$(C_TO_O) && \
 	echo $(C_TO_O_CMD) > $(call obj2cmd,$(@)) && \
+	sed 's,'$@':,dep_'$@' =,' $(call obj2dep,$(@)).tmp > $(call obj2dep,$(@)) && \
+	rm -f $(call obj2dep,$(@)).tmp
+CXX_TO_O_CMD = 'cmd_$@ = $(CXX_TO_O_STR)'
+CXX_TO_O_DO = @set -e; \
+	echo $(CXX_TO_O_DISP); \
+	$(CXX_TO_O) && \
+	echo $(CXX_TO_O_CMD) > $(call obj2cmd,$(@)) && \
 	sed 's,'$@':,dep_'$@' =,' $(call obj2dep,$(@)).tmp > $(call obj2dep,$(@)) && \
 	rm -f $(call obj2dep,$(@)).tmp
 
@@ -136,6 +151,26 @@ boolean = $(if $1,1,0)
 		$(depfile_missing),\
 		$(depfile_newer)),\
 		$(C_TO_O_DO))
+#
+# Compile .cc file if needed
+# Note: dep_$$@ is from the .d file and DEP_$$@ can be specified by
+# user (by default it is empty)
+#
+.SECONDEXPANSION:
+%.o: %.cc $$(wildcard $$(dep_$$@)) $$(DEP_$$(@)) FORCE
+	@[ -d $(dir $@) ] || mkdir -p $(dir $@)
+	$(if $(D),\
+		@echo -n "$< -> $@ " ; \
+		echo -n "file_missing=$(call boolean,$(file_missing)) " ; \
+		echo -n "cmdline_changed=$(call boolean,$(call cmdline_changed,$(CXX_TO_O))) " ; \
+		echo -n "depfile_missing=$(call boolean,$(depfile_missing)) " ; \
+		echo "depfile_newer=$(call boolean,$(depfile_newer))")
+	$(if $(or \
+		$(file_missing),\
+		$(call cmdline_changed,$(CXX_TO_O)),\
+		$(depfile_missing),\
+		$(depfile_newer)),\
+		$(CXX_TO_O_DO))
 
 # command to assemble a .S file to generate an object
 ifeq ($(USE_HOST),1)
