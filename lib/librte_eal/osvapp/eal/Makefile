@@ -47,6 +47,11 @@ INC_FLAGS += -I$(RTE_SDK)/lib/librte_pmd_ring
 INC_FLAGS += -I$(RTE_SDK)/lib/librte_pmd_pcap
 INC_FLAGS += -I$(RTE_SDK)/lib/librte_pmd_af_packet
 INC_FLAGS += -I$(RTE_SDK)/lib/librte_pmd_xenvirt
+INC_FLAGS += -I$(OSV_SDK)
+INC_FLAGS += -I$(OSV_SDK)/arch/x64
+INC_FLAGS += -I$(OSV_SDK)/arch/common
+INC_FLAGS += -I$(OSV_SDK)/include
+
 CFLAGS += $(INC_FLAGS) $(WERROR_FLAGS) -O3
 CXXFLAGS += $(INC_FLAGS) -std=gnu++11 -O3
 
