@@ -39,11 +39,7 @@
 #
 # examples for RTE_EXEC_ENV: linuxapp, bsdapp
 #
-ifeq ($(RTE_BUILD_SHARED_LIB),y)
 EXECENV_CFLAGS  = -pthread -fPIC
-else
-EXECENV_CFLAGS  = -pthread
-endif
 
 # Workaround lack of DT_NEEDED entry
 EXECENV_LDFLAGS = --no-as-needed
