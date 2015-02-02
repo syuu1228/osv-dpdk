@@ -36,6 +36,10 @@
 
 #include <stdio.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Initialize the memzone subsystem (private to eal).
  *
@@ -203,4 +207,7 @@ int rte_eal_alarm_init(void);
  */
 int rte_eal_dev_init(void);
 
+#ifdef __cplusplus
+}
+#endif
 #endif /* _EAL_PRIVATE_H_ */
