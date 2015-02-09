@@ -114,6 +114,7 @@ eal_thread_set_affinity(void)
  * CPU_ISSET_S(),  CPU_AND_S(), CPU_OR_S(), CPU_XOR_S(), and CPU_EQUAL_S()
  * first appeared in glibc 2.7.
  */
+#undef CPU_ALLOC
 #if defined(CPU_ALLOC)
 	size_t size;
 	cpu_set_t *cpusetp;
