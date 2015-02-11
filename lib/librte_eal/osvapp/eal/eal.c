@@ -552,14 +552,10 @@ eal_parse_args(int argc, char **argv)
 
 		/* long options */
 		case OPT_XEN_DOM0_NUM:
-#ifdef RTE_LIBRTE_XEN_DOM0
-			internal_config.xen_dom0_support = 1;
-#else
 			RTE_LOG(ERR, EAL, "Can't support DPDK app "
 				"running on Dom0, please configure"
 				" RTE_LIBRTE_XEN_DOM0=y\n");
 			return -1;
-#endif
 			break;
 
 		case OPT_HUGE_DIR_NUM:
