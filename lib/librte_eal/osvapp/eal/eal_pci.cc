@@ -223,7 +223,7 @@ pci_scan_one(const char *dirname, uint16_t domain, uint8_t bus,
 	unsigned long tmp;
 	struct rte_pci_device *dev;
 
-	dev = malloc(sizeof(*dev));
+	dev = static_cast<struct rte_pci_device *>(malloc(sizeof(*dev)));
 	if (dev == NULL) {
 		return -1;
 	}
@@ -539,7 +539,7 @@ rte_eal_pci_probe_one_driver(struct rte_pci_driver *dr, struct rte_pci_device *d
 
 		struct rte_pci_addr *loc = &dev->addr;
 
-		RTE_LOG(DEBUG, EAL, "PCI device "PCI_PRI_FMT" on NUMA socket %i\n",
+		RTE_LOG(DEBUG, EAL, "PCI device " PCI_PRI_FMT " on NUMA socket %i\n",
 				loc->domain, loc->bus, loc->devid, loc->function,
 				dev->numa_node);
 
