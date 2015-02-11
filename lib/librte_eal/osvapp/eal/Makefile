@@ -63,8 +63,6 @@ SRCS-$(CONFIG_RTE_LIBRTE_EAL_OSVAPP) += eal_thread.c
 SRCS-$(CONFIG_RTE_LIBRTE_EAL_OSVAPP) += eal_log.c
 SRCS-$(CONFIG_RTE_LIBRTE_EAL_OSVAPP) += eal_pci.c
 SRCS-$(CONFIG_RTE_LIBRTE_EAL_OSVAPP) += eal_pci_uio.c
-SRCS-$(CONFIG_RTE_LIBRTE_EAL_OSVAPP) += eal_pci_vfio.c
-SRCS-$(CONFIG_RTE_LIBRTE_EAL_OSVAPP) += eal_pci_vfio_mp_sync.c
 SRCS-$(CONFIG_RTE_LIBRTE_EAL_OSVAPP) += eal_debug.c
 SRCS-$(CONFIG_RTE_LIBRTE_EAL_OSVAPP) += eal_lcore.cc
 SRCS-$(CONFIG_RTE_LIBRTE_EAL_OSVAPP) += eal_timer.c
@@ -95,7 +93,6 @@ CFLAGS_eal_log.o := -D_GNU_SOURCE
 CFLAGS_eal_common_log.o := -D_GNU_SOURCE
 CFLAGS_eal_hugepage_info.o := -D_GNU_SOURCE
 CFLAGS_eal_pci.o := -D_GNU_SOURCE
-CFLAGS_eal_pci_vfio.o := -D_GNU_SOURCE
 CFLAGS_eal_common_whitelist.o := -D_GNU_SOURCE
 
 # workaround for a gcc bug with noreturn attribute

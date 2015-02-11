@@ -502,16 +502,6 @@ pci_map_device(struct rte_pci_device *dev)
 {
 	int ret, mapped = 0;
 
-	/* try mapping the NIC resources using VFIO if it exists */
-#ifdef VFIO_PRESENT
-	if (pci_vfio_is_enabled()) {
-		ret = pci_vfio_map_resource(dev);
-		if (ret == 0)
-			mapped = 1;
-		else if (ret < 0)
-			return ret;
-	}
-#endif
 	/* map resources for devices that use igb_uio */
 	if (!mapped) {
 		ret = pci_uio_map_resource(dev);
@@ -609,21 +599,5 @@ rte_eal_pci_init(void)
 		RTE_LOG(ERR, EAL, "%s(): Cannot scan PCI bus\n", __func__);
 		return -1;
 	}
-#ifdef VFIO_PRESENT
-	pci_vfio_enable();
-
-	if (pci_vfio_is_enabled()) {
-
-		/* if we are primary process, create a thread to communicate with
-		 * secondary processes. the thread will use a socket to wait for
-		 * requests from secondary process to send open file descriptors,
-		 * because VFIO does not allow multiple open descriptors on a group or
-		 * VFIO container.
-		 */
-		if (internal_config.process_type == RTE_PROC_PRIMARY &&
-				pci_vfio_mp_sync_setup() < 0)
-			return -1;
-	}
-#endif
 	return 0;
 }
