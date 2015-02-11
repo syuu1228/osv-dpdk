@@ -336,17 +336,9 @@ map_all_hugepages(struct hugepage_file *hugepg_tbl,
 			 * physical block: count the number of
 			 * contiguous physical pages. */
 			for (j = i+1; j < hpi->num_pages[0] ; j++) {
-#ifdef RTE_ARCH_PPC_64
-				/* The physical addresses are sorted in
-				 * descending order on PPC64 */
-				if (hugepg_tbl[j].physaddr !=
-				    hugepg_tbl[j-1].physaddr - hugepage_sz)
-					break;
-#else
 				if (hugepg_tbl[j].physaddr !=
 				    hugepg_tbl[j-1].physaddr + hugepage_sz)
 					break;
-#endif
 			}
 			num_pages = j - i;
 			vma_len = num_pages * hugepage_sz;
@@ -438,17 +430,9 @@ remap_all_hugepages(struct hugepage_file *hugepg_tbl, struct hugepage_info *hpi)
 		 * physical block: count the number of
 		 * contiguous physical pages. */
 		for (j = i+1; j < hpi->num_pages[0] ; j++) {
-#ifdef RTE_ARCH_PPC_64
-			/* The physical addresses are sorted in descending
-			 * order on PPC64 */
-			if (hugepg_tbl[j].physaddr !=
-				hugepg_tbl[j-1].physaddr - hugepage_sz)
-				break;
-#else
 			if (hugepg_tbl[j].physaddr !=
 				hugepg_tbl[j-1].physaddr + hugepage_sz)
 				break;
-#endif
 		}
 		num_pages = j - i;
 		vma_len = num_pages * hugepage_sz;
@@ -694,11 +678,7 @@ sort_by_physaddr(struct hugepage_file *hugepg_tbl, struct hugepage_info *hpi)
 		for (j=i; j< hpi->num_pages[0]; j++) {
 
 			if (compare_addr == 0 ||
-#ifdef RTE_ARCH_PPC_64
-				hugepg_tbl[j].physaddr > compare_addr) {
-#else
 				hugepg_tbl[j].physaddr < compare_addr) {
-#endif
 				compare_addr = hugepg_tbl[j].physaddr;
 				compare_idx = j;
 			}
@@ -1273,24 +1253,12 @@ rte_eal_hugepage_init(void)
 		else if (hugepage[i].size != hugepage[i-1].size)
 			new_memseg = 1;
 
-#ifdef RTE_ARCH_PPC_64
-		/* On PPC64 architecture, the mmap always start from higher
-		 * virtual address to lower address. Here, both the physical
-		 * address and virtual address are in descending order */
-		else if ((hugepage[i-1].physaddr - hugepage[i].physaddr) !=
-		    hugepage[i].size)
-			new_memseg = 1;
-		else if (((unsigned long)hugepage[i-1].final_va -
-		    (unsigned long)hugepage[i].final_va) != hugepage[i].size)
-			new_memseg = 1;
-#else
 		else if ((hugepage[i].physaddr - hugepage[i-1].physaddr) !=
 		    hugepage[i].size)
 			new_memseg = 1;
 		else if (((unsigned long)hugepage[i].final_va -
 		    (unsigned long)hugepage[i-1].final_va) != hugepage[i].size)
 			new_memseg = 1;
-#endif
 
 		if (new_memseg) {
 			j += 1;
@@ -1309,12 +1277,6 @@ rte_eal_hugepage_init(void)
 		}
 		/* continuation of previous memseg */
 		else {
-#ifdef RTE_ARCH_PPC_64
-		/* Use the phy and virt address of the last page as segment
-		 * address for IBM Power architecture */
-			mcfg->memseg[j].phys_addr = hugepage[i].physaddr;
-			mcfg->memseg[j].addr = hugepage[i].final_va;
-#endif
 			mcfg->memseg[j].len += mcfg->memseg[j].hugepage_sz;
 		}
 		hugepage[i].memseg_id = j;
