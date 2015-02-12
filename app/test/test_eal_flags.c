@@ -287,7 +287,7 @@ static int
 test_whitelist_flag(void)
 {
 	unsigned i;
-#ifdef RTE_EXEC_ENV_BSDAPP
+#if defined(RTE_EXEC_ENV_BSDAPP) || defined(RTE_EXEC_ENV_OSVAPP)
 	/* BSD target doesn't support prefixes at this point */
 	const char * prefix = "";
 #else
@@ -353,7 +353,7 @@ test_whitelist_flag(void)
 static int
 test_invalid_b_flag(void)
 {
-#ifdef RTE_EXEC_ENV_BSDAPP
+#if defined(RTE_EXEC_ENV_BSDAPP) || defined(RTE_EXEC_ENV_OSVAPP)
 	/* BSD target doesn't support prefixes at this point */
 	const char * prefix = "";
 #else
@@ -400,7 +400,7 @@ test_invalid_b_flag(void)
 static int
 test_invalid_vdev_flag(void)
 {
-#ifdef RTE_EXEC_ENV_BSDAPP
+#if defined(RTE_EXEC_ENV_BSDAPP) || defined(RTE_EXEC_ENV_OSVAPP)
 	/* BSD target doesn't support prefixes at this point, and we also need to
 	 * run another primary process here */
 	const char * prefix = no_shconf;
@@ -454,7 +454,7 @@ test_invalid_vdev_flag(void)
 static int
 test_invalid_r_flag(void)
 {
-#ifdef RTE_EXEC_ENV_BSDAPP
+#if defined(RTE_EXEC_ENV_BSDAPP) || defined(RTE_EXEC_ENV_OSVAPP)
 	/* BSD target doesn't support prefixes at this point */
 	const char * prefix = "";
 #else
@@ -498,7 +498,7 @@ test_invalid_r_flag(void)
 static int
 test_missing_c_flag(void)
 {
-#ifdef RTE_EXEC_ENV_BSDAPP
+#if defined(RTE_EXEC_ENV_BSDAPP) || defined(RTE_EXEC_ENV_OSVAPP)
 	/* BSD target doesn't support prefixes at this point */
 	const char * prefix = "";
 #else
@@ -562,7 +562,7 @@ test_missing_c_flag(void)
 static int
 test_master_lcore_flag(void)
 {
-#ifdef RTE_EXEC_ENV_BSDAPP
+#if defined(RTE_EXEC_ENV_BSDAPP) || defined(RTE_EXEC_ENV_OSVAPP)
 	/* BSD target doesn't support prefixes at this point */
 	const char *prefix = "";
 #else
@@ -610,7 +610,7 @@ test_master_lcore_flag(void)
 static int
 test_missing_n_flag(void)
 {
-#ifdef RTE_EXEC_ENV_BSDAPP
+#if defined(RTE_EXEC_ENV_BSDAPP) || defined(RTE_EXEC_ENV_OSVAPP)
 	/* BSD target doesn't support prefixes at this point */
 	const char * prefix = "";
 #else
@@ -655,7 +655,7 @@ test_no_hpet_flag(void)
 {
 	char prefix[PATH_MAX], tmp[PATH_MAX];
 
-#ifdef RTE_EXEC_ENV_BSDAPP
+#if defined(RTE_EXEC_ENV_BSDAPP) || defined(RTE_EXEC_ENV_OSVAPP)
 	return 0;
 #endif
 	if (get_current_prefix(tmp, sizeof(tmp)) == NULL) {
@@ -687,7 +687,7 @@ test_no_hpet_flag(void)
 static int
 test_no_huge_flag(void)
 {
-#ifdef RTE_EXEC_ENV_BSDAPP
+#if defined(RTE_EXEC_ENV_BSDAPP) || defined(RTE_EXEC_ENV_OSVAPP)
 	/* BSD target doesn't support prefixes at this point, and we also need to
 	 * run another primary process here */
 	const char * prefix = no_shconf;
@@ -715,7 +715,7 @@ test_no_huge_flag(void)
 		printf("Error - process run ok with --no-huge and -m flags\n");
 		return -1;
 	}
-#ifdef RTE_EXEC_ENV_BSDAPP
+#if defined(RTE_EXEC_ENV_BSDAPP) || defined(RTE_EXEC_ENV_OSVAPP)
 	/* BSD target does not support NUMA, hence no --socket-mem tests */
 	return 0;
 #endif
@@ -803,7 +803,7 @@ static int
 test_misc_flags(void)
 {
 	char hugepath[PATH_MAX] = {0};
-#ifdef RTE_EXEC_ENV_BSDAPP
+#if defined(RTE_EXEC_ENV_BSDAPP) || defined(RTE_EXEC_ENV_OSVAPP)
 	/* BSD target doesn't support prefixes at this point */
 	const char * prefix = "";
 	const char * nosh_prefix = "";
@@ -875,7 +875,7 @@ test_misc_flags(void)
 	const char *argv6[] = {prgname, "-c", "1", "-n", "2", "-m", DEFAULT_MEM_SIZE,
 			no_shconf, nosh_prefix };
 
-#ifdef RTE_EXEC_ENV_BSDAPP
+#if defined(RTE_EXEC_ENV_BSDAPP) || defined(RTE_EXEC_ENV_OSVAPP)
 	return 0;
 #endif
 	/* With --huge-dir */
@@ -940,7 +940,7 @@ test_misc_flags(void)
 		printf("Error - process did not run ok with --no-shconf flag\n");
 		return -1;
 	}
-#ifdef RTE_EXEC_ENV_BSDAPP
+#if defined(RTE_EXEC_ENV_BSDAPP) || defined(RTE_EXEC_ENV_OSVAPP)
 	return 0;
 #endif
 	if (launch_proc(argv7) != 0) {
@@ -1001,7 +1001,7 @@ test_file_prefix(void)
 	 * 7. check that only memtest2 hugefiles are present in the hugedir
 	 */
 
-#ifdef RTE_EXEC_ENV_BSDAPP
+#if defined(RTE_EXEC_ENV_BSDAPP) || defined(RTE_EXEC_ENV_OSVAPP)
 	return 0;
 #endif
 
@@ -1108,7 +1108,7 @@ test_file_prefix(void)
 static int
 test_memory_flags(void)
 {
-#ifdef RTE_EXEC_ENV_BSDAPP
+#if defined(RTE_EXEC_ENV_BSDAPP) || defined(RTE_EXEC_ENV_OSVAPP)
 	/* BSD target doesn't support prefixes at this point */
 	const char * prefix = "";
 #else
@@ -1161,7 +1161,7 @@ test_memory_flags(void)
 	char invalid_socket_mem[SOCKET_MEM_STRLEN];
 	char buf[SOCKET_MEM_STRLEN];	/* to avoid copying string onto itself */
 
-#ifdef RTE_EXEC_ENV_BSDAPP
+#if defined(RTE_EXEC_ENV_BSDAPP) || defined(RTE_EXEC_ENV_OSVAPP)
 	int i, num_sockets = 1;
 #else
 	int i, num_sockets = get_number_of_sockets();
@@ -1214,7 +1214,7 @@ test_memory_flags(void)
 		return -1;
 	}
 
-#ifdef RTE_EXEC_ENV_BSDAPP
+#if defined(RTE_EXEC_ENV_BSDAPP) || defined(RTE_EXEC_ENV_OSVAPP)
 	/* no other tests are applicable to BSD */
 	return 0;
 #endif
