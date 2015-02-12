@@ -1,7 +1,7 @@
 #!/bin/sh
 
 rm -rf ROOTFS usr.manifest x86_64-default-osvapp-gcc
-make install T=x86_64-default-osvapp-gcc OSV_SDK=`readlink -f ../..`
+make install T=x86_64-default-osvapp-gcc OSV_SDK=`readlink -f ../..` || exit $?
 mkdir -p ROOTFS
 cp -a x86_64-default-osvapp-gcc/app/* ROOTFS/
 for i in ROOTFS/*
