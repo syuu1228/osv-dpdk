@@ -31,178 +31,27 @@
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <string.h>
 #include <stdio.h>
-#include <stdint.h>
-#include <sys/types.h>
-#include <syslog.h>
-#include <sys/queue.h>
-
-#include <rte_memory.h>
-#include <rte_memzone.h>
-#include <rte_tailq.h>
-#include <rte_eal.h>
-#include <rte_launch.h>
-#include <rte_per_lcore.h>
-#include <rte_lcore.h>
-#include <rte_spinlock.h>
+#include <rte_common.h>
 #include <rte_log.h>
 
-#include "eal_private.h"
-
-#if 0
-/*
- * default log function, used once mempool (hence log history) is
- * available
- */
-static ssize_t
-console_log_write(__attribute__((unused)) void *c, const char *buf, size_t size)
-{
-	char copybuf[BUFSIZ + 1];
-	ssize_t ret;
-	uint32_t loglevel;
-
-	/* add this log in history */
-	rte_log_add_in_history(buf, size);
-
-	/* write on stdout */
-	ret = fwrite(buf, 1, size, stdout);
-	fflush(stdout);
-
-	/* truncate message if too big (should not happen) */
-	if (size > BUFSIZ)
-		size = BUFSIZ;
-
-	/* Syslog error levels are from 0 to 7, so subtract 1 to convert */
-	loglevel = rte_log_cur_msg_loglevel() - 1;
-	memcpy(copybuf, buf, size);
-	copybuf[size] = '\0';
-
-	/* write on syslog too */
-	syslog(loglevel, "%s", copybuf);
-
-	return ret;
-}
-
-static ssize_t
-console_log_read(__attribute__((unused)) void *c,
-		 __attribute__((unused)) char *buf,
-		 __attribute__((unused)) size_t size)
-{
-	return 0;
-}
-
-static int
-console_log_seek(__attribute__((unused)) void *c,
-		 __attribute__((unused)) off64_t *offset,
-		 __attribute__((unused)) int whence)
-{
-	return -1;
-}
-
-static int
-console_log_close(__attribute__((unused)) void *c)
-{
-	return 0;
-}
-
-static cookie_io_functions_t console_log_func = {
-	.read  = console_log_read,
-	.write = console_log_write,
-	.seek  = console_log_seek,
-	.close = console_log_close
-};
-#endif
+#include <eal_private.h>
 
 /*
  * set the log to default function, called during eal init process,
  * once memzones are available.
  */
 int
-rte_eal_log_init(__attribute__((unused)) const char *id, __attribute__((unused)) int facility)
+rte_eal_log_init(const char *id __rte_unused, int facility __rte_unused)
 {
-#if 0
-	FILE *log_stream;
-
-	log_stream = fopencookie(NULL, "w+", console_log_func);
-	if (log_stream == NULL)
+	if (rte_eal_common_log_init(stderr) < 0)
 		return -1;
-
-	openlog(id, LOG_NDELAY | LOG_PID, facility);
-
-	if (rte_eal_common_log_init(log_stream) < 0)
-		return -1;
-#endif
-	if (rte_eal_common_log_init(stdout) < 0)
-		return -1;
-
 	return 0;
 }
 
-/* early logs */
-
-#if 0
-/*
- * early log function, used during boot when mempool (hence log
- * history) is not available
- */
-static ssize_t
-early_log_write(__attribute__((unused)) void *c, const char *buf, size_t size)
-{
-	ssize_t ret;
-	ret = fwrite(buf, size, 1, stdout);
-	fflush(stdout);
-	if (ret == 0)
-		return -1;
-	return ret;
-}
-
-static ssize_t
-early_log_read(__attribute__((unused)) void *c,
-	       __attribute__((unused)) char *buf,
-	       __attribute__((unused)) size_t size)
-{
-	return 0;
-}
-
-static int
-early_log_seek(__attribute__((unused)) void *c,
-	       __attribute__((unused)) off64_t *offset,
-	       __attribute__((unused)) int whence)
-{
-	return -1;
-}
-
-static int
-early_log_close(__attribute__((unused)) void *c)
-{
-	return 0;
-}
-
-static cookie_io_functions_t early_log_func = {
-	.read  = early_log_read,
-	.write = early_log_write,
-	.seek  = early_log_seek,
-	.close = early_log_close
-};
-static FILE *early_log_stream;
-#endif
-
-/*
- * init the log library, called by rte_eal_init() to enable early
- * logs
- */
 int
 rte_eal_log_early_init(void)
 {
-#if 0
-	early_log_stream = fopencookie(NULL, "w+", early_log_func);
-	if (early_log_stream == NULL) {
-		printf("Cannot configure early_log_stream\n");
-		return -1;
-	}
-	rte_openlog_stream(early_log_stream);
-#endif
-	rte_openlog_stream(stdout);
+	rte_openlog_stream(stderr);
 	return 0;
 }
