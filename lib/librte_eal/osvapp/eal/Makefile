@@ -42,7 +42,6 @@ INC_FLAGS += -I$(RTE_SDK)/lib/librte_ring
 INC_FLAGS += -I$(RTE_SDK)/lib/librte_mempool
 INC_FLAGS += -I$(RTE_SDK)/lib/librte_malloc
 INC_FLAGS += -I$(RTE_SDK)/lib/librte_ether
-INC_FLAGS += -I$(RTE_SDK)/lib/librte_ivshmem
 INC_FLAGS += -I$(RTE_SDK)/lib/librte_pmd_ring
 INC_FLAGS += -I$(RTE_SDK)/lib/librte_pmd_pcap
 INC_FLAGS += -I$(RTE_SDK)/lib/librte_pmd_af_packet
@@ -67,9 +66,6 @@ SRCS-$(CONFIG_RTE_LIBRTE_EAL_OSVAPP) += eal_lcore.cc
 SRCS-$(CONFIG_RTE_LIBRTE_EAL_OSVAPP) += eal_timer.c
 SRCS-$(CONFIG_RTE_LIBRTE_EAL_OSVAPP) += eal_interrupts.c
 SRCS-$(CONFIG_RTE_LIBRTE_EAL_OSVAPP) += eal_alarm.c
-ifeq ($(CONFIG_RTE_LIBRTE_IVSHMEM),y)
-SRCS-$(CONFIG_RTE_LIBRTE_EAL_OSVAPP) += eal_ivshmem.c
-endif
 
 # from common dir
 SRCS-$(CONFIG_RTE_LIBRTE_EAL_OSVAPP) += eal_common_memzone.c
