@@ -55,7 +55,7 @@ timer_cb(struct rte_timer *t __rte_unused, void *param __rte_unused)
 
 #define DELAY_SECONDS 1
 
-#ifdef RTE_EXEC_ENV_LINUXAPP
+#if defined(RTE_EXEC_ENV_LINUXAPP) || defined(RTE_EXEC_ENV_OSVAPP)
 #define do_delay() usleep(10)
 #else
 #define do_delay() rte_pause()
