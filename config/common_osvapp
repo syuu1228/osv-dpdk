@@ -37,7 +37,6 @@
 #
 CONFIG_RTE_EXEC_ENV="osvapp"
 CONFIG_RTE_EXEC_ENV_OSVAPP=y
-CONFIG_RTE_EXEC_ENV_LINUXAPP=y
 
 ##
 ## machine can define specific variables or action for a specific board
