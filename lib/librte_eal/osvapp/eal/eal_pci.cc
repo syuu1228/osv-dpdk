@@ -45,7 +45,6 @@
 #include "rte_pci_dev_ids.h"
 #include "eal_filesystem.h"
 #include "eal_private.h"
-#include "eal_pci_init.h"
 
 #include "drivers/driver.hh"
 
@@ -58,7 +57,28 @@
  * IGB_UIO driver (or doesn't initialize, if the device wasn't bound to it).
  */
 
-struct mapped_pci_res_list *pci_res_list = NULL;
+struct pci_map {
+	void *addr;
+	uint64_t offset;
+	uint64_t size;
+	uint64_t phaddr;
+};
+
+/*
+ * For multi-process we need to reproduce all PCI mappings in secondary
+ * processes, so save them in a tailq.
+ */
+struct mapped_pci_resource {
+	TAILQ_ENTRY(mapped_pci_resource) next;
+
+	struct rte_pci_addr pci_addr;
+	int nb_maps;
+	struct pci_map maps[PCI_MAX_RESOURCE];
+};
+
+TAILQ_HEAD(mapped_pci_res_list, mapped_pci_resource);
+
+static struct mapped_pci_res_list *pci_res_list = NULL;
 
 /* unbind kernel driver for this device */
 static int
@@ -77,14 +97,6 @@ pci_unbind_kernel_driver(struct rte_pci_device *rte_dev)
 	});
 }
 
-
-/* map a particular resource from a file */
-void *
-pci_map_resource(void *requested_addr, int fd, off_t offset, size_t size)
-{
-	return MAP_FAILED;
-}
-
 /* Compare two PCI device addresses. */
 static int
 pci_addr_comparison(struct rte_pci_addr *addr, struct rte_pci_addr *addr2)
@@ -96,20 +108,6 @@ pci_addr_comparison(struct rte_pci_addr *addr, struct rte_pci_addr *addr2)
 		return 1;
 	else
 		return 0;
-}
-
-static int
-pci_map_device(struct rte_pci_device *dev)
-{
-	int ret, mapped = 0;
-
-	/* map resources for devices that use igb_uio */
-	if (!mapped) {
-		ret = pci_uio_map_resource(dev);
-		if (ret != 0)
-			return ret;
-	}
-	return 0;
 }
 
 /*
@@ -154,12 +152,7 @@ rte_eal_pci_probe_one_driver(struct rte_pci_driver *dr, struct rte_pci_device *d
 			return 1;
 		}
 
-		if (dr->drv_flags & RTE_PCI_DRV_NEED_MAPPING) {
-			/* map resources for devices that use igb_uio */
-			ret = pci_map_device(dev);
-			if (ret != 0)
-				return ret;
-		} else if (dr->drv_flags & RTE_PCI_DRV_FORCE_UNBIND &&
+		if (dr->drv_flags & RTE_PCI_DRV_FORCE_UNBIND &&
 		           rte_eal_process_type() == RTE_PROC_PRIMARY) {
 			/* unbind current driver */
 			if (pci_unbind_kernel_driver(dev) < 0)
@@ -195,12 +188,32 @@ rte_eal_pci_init(void)
 		auto pci_dev = static_cast<pci::device*>(dev);
 		auto rte_dev = new rte_pci_device();
 		pci_dev->get_bdf(bus, device, func);
+		rte_dev->addr.domain = 0;
 		rte_dev->addr.bus = bus;
 		rte_dev->addr.devid = device;
 		rte_dev->addr.function = func;
 		rte_dev->id.vendor_id = pci_dev->get_vendor_id();
 		rte_dev->id.device_id = pci_dev->get_device_id();
-		rte_dev->id.device_id = pci_dev->get_device_id();
+		rte_dev->id.subsystem_vendor_id = pci_dev->get_subsystem_vid();
+		rte_dev->id.subsystem_device_id = pci_dev->get_subsystem_id();
+		rte_dev->max_vfs = 0;
+		rte_dev->numa_node = -1;
+
+		for (int i = 0; ; i++) {
+			auto bar = pci_dev->get_bar(i);
+			if (bar == nullptr)
+				break;
+			if (bar->is_mmio()) {
+				rte_dev->mem_resource[i].len = bar->get_size();
+				rte_dev->mem_resource[i].phys_addr = bar->get_addr64();
+				bar->map();
+				rte_dev->mem_resource[i].addr = const_cast<void *>(bar->get_mmio());
+			} else {
+				rte_dev->mem_resource[i].len = bar->get_size();
+				rte_dev->mem_resource[i].phys_addr = bar->get_addr_lo();
+				rte_dev->mem_resource[i].addr = NULL;
+			}
+		}
 
 		/* device is valid, add in list (sorted) */
 		if (TAILQ_EMPTY(&pci_device_list)) {
