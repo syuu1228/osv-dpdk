@@ -95,6 +95,7 @@ pci_unbind_kernel_driver(struct rte_pci_device *rte_dev)
 		        delete pci_dev;
 		}
 	});
+	return 0;
 }
 
 /* Compare two PCI device addresses. */
