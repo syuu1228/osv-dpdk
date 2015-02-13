@@ -56,14 +56,17 @@
 #include "eal_private.h"
 #include "eal_internal_cfg.h"
 
+extern "C" {
+#include <external/x64/acpica/source/include/acpi.h>
+}
+#include <boost/intrusive/parent_from_member.hpp>
+
 enum timer_source eal_timer_source = EAL_TIMER_HPET;
 
 /* The frequency of the RDTSC timer resolution */
 static uint64_t eal_tsc_resolution_hz = 0;
 
 #ifdef RTE_LIBEAL_USE_HPET
-
-#define DEV_HPET "/dev/hpet"
 
 /* Maximum number of counters. */
 #define HPET_TIMER_NUM 3
@@ -193,25 +196,17 @@ rte_eal_hpet_init(int make_default)
 		return -1;
 	}
 
-	fd = open(DEV_HPET, O_RDONLY);
-	if (fd < 0) {
-		RTE_LOG(ERR, EAL, "ERROR: Cannot open "DEV_HPET": %s!\n",
-			strerror(errno));
-		internal_config.no_hpet = 1;
-		return -1;
-	}
-	eal_hpet = mmap(NULL, 1024, PROT_READ, MAP_SHARED, fd, 0);
-	if (eal_hpet == MAP_FAILED) {
-		RTE_LOG(ERR, EAL, "ERROR: Cannot mmap "DEV_HPET"!\n"
-				"Please enable CONFIG_HPET_MMAP in your kernel configuration "
-				"to allow HPET support.\n"
-				"To run without using HPET, set CONFIG_RTE_LIBEAL_USE_HPET=n "
-				"in your build configuration or use '--no-hpet' EAL flag.\n");
-		close(fd);
-		internal_config.no_hpet = 1;
-		return -1;
-	}
-	close(fd);
+	char hpet_sig[] = ACPI_SIG_HPET;
+	ACPI_TABLE_HEADER *hpet_header;
+	auto st = AcpiGetTable(hpet_sig, 0, &hpet_header);
+	// If we don't have a paravirtual clock, nor an HPET clock, we currently
+	// have no chance of running.
+	assert(st == AE_OK);
+	auto h = get_parent_from_member(hpet_header, &ACPI_TABLE_HPET::Header);
+	auto hpet_address = h->Address;
+
+	mmioaddr_t addr = mmio_map(hpet_address.Address, 4096);
+	eal_hpet = reinterpret_cast<volatile struct eal_hpet_regs *>(addr);
 
 	eal_hpet_resolution_fs = (uint32_t)((eal_hpet->capabilities &
 					CLK_PERIOD_MASK) >>
@@ -241,52 +236,18 @@ rte_eal_hpet_init(int make_default)
 }
 #endif
 
-static void
-check_tsc_flags(void)
-{
-	char line[512];
-	FILE *stream;
-
-	stream = fopen("/proc/cpuinfo", "r");
-	if (!stream) {
-		RTE_LOG(WARNING, EAL, "WARNING: Unable to open /proc/cpuinfo\n");
-		return;
-	}
-
-	while (fgets(line, sizeof line, stream)) {
-		char *constant_tsc;
-		char *nonstop_tsc;
-
-		if (strncmp(line, "flags", 5) != 0)
-			continue;
-
-		constant_tsc = strstr(line, "constant_tsc");
-		nonstop_tsc = strstr(line, "nonstop_tsc");
-		if (!constant_tsc || !nonstop_tsc)
-			RTE_LOG(WARNING, EAL,
-				"WARNING: cpu flags "
-				"constant_tsc=%s "
-				"nonstop_tsc=%s "
-				"-> using unreliable clock cycles !\n",
-				constant_tsc ? "yes":"no",
-				nonstop_tsc ? "yes":"no");
-		break;
-	}
-
-	fclose(stream);
-}
-
 static int
 set_tsc_freq_from_clock(void)
 {
-#ifdef CLOCK_MONOTONIC_RAW
 #define NS_PER_SEC 1E9
 
-	struct timespec sleeptime = {.tv_nsec = 5E8 }; /* 1/2 second */
+	struct timespec sleeptime;
+	sleeptime.tv_sec = 0;
+	sleeptime.tv_nsec = 5E8; /* 1/2 second */
 
 	struct timespec t_start, t_end;
 
-	if (clock_gettime(CLOCK_MONOTONIC_RAW, &t_start) == 0) {
+	if (clock_gettime(CLOCK_MONOTONIC, &t_start) == 0) {
 		uint64_t ns, end, start = rte_rdtsc();
 		nanosleep(&sleeptime,NULL);
 		clock_gettime(CLOCK_MONOTONIC_RAW, &t_end);
@@ -298,7 +259,6 @@ set_tsc_freq_from_clock(void)
 		eal_tsc_resolution_hz = (uint64_t)((end - start)/secs);
 		return 0;
 	}
-#endif
 	return -1;
 }
 
@@ -327,7 +287,7 @@ set_tsc_freq(void)
 	if (set_tsc_freq_from_clock() < 0)
 		set_tsc_freq_fallback();
 
-	RTE_LOG(INFO, EAL, "TSC frequency is ~%"PRIu64" KHz\n",
+	RTE_LOG(INFO, EAL, "TSC frequency is ~%" PRIu64 " KHz\n",
 			eal_tsc_resolution_hz/1000);
 }
 
@@ -338,6 +298,5 @@ rte_eal_timer_init(void)
 	eal_timer_source = EAL_TIMER_TSC;
 
 	set_tsc_freq();
-	check_tsc_flags();
 	return 0;
 }
