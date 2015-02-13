@@ -200,10 +200,16 @@ rte_eal_pci_init(void)
 		rte_dev->max_vfs = 0;
 		rte_dev->numa_node = -1;
 
+		RTE_LOG(DEBUG, EAL, "bus=%x devid=%x function=%x vendor_id=%x device_id=%x sub_vendor_id=%x sub_device_id=%x\n",
+			bus, device, func, pci_dev->get_vendor_id(), pci_dev->get_device_id(), pci_dev->get_subsystem_vid(), pci_dev->get_subsystem_id());
+
 		for (int i = 0; ; i++) {
-			auto bar = pci_dev->get_bar(i);
-			if (bar == nullptr)
+			auto bar = pci_dev->get_bar(i+1);
+			if (bar == nullptr) {
+				RTE_LOG(DEBUG, EAL, "   bar%d not available\n", i);
 				break;
+			}
+			RTE_LOG(DEBUG, EAL, "   bar%d mmio:%d size:%d addr:%x\n", i, bar->is_mmio(), bar->get_size(), bar->get_addr64());
 			if (bar->is_mmio()) {
 				rte_dev->mem_resource[i].len = bar->get_size();
 				rte_dev->mem_resource[i].phys_addr = bar->get_addr64();
