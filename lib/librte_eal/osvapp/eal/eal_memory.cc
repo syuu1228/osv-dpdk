@@ -50,6 +50,9 @@
 #include <osv/mmu-defs.hh>
 #include <osv/pagealloc.hh>
 
+namespace memory {
+void* alloc_phys_contiguous_aligned(size_t sz, size_t align);
+};
 namespace mmu {
 phys virt_to_phys(void *virt);
 };
@@ -70,10 +73,9 @@ static int
 rte_eal_hugepage_init(void)
 {
 	struct rte_mem_config *mcfg;
-	struct rte_memseg *seg;
+	uint64_t total_mem = 0;
 	void *addr;
-	uint64_t physaddr;
-	size_t size;
+	unsigned i, j, seg_idx = 0;
 
 	/* get pointer to global configuration */
 	mcfg = rte_eal_get_configuration()->mem_config;
@@ -88,22 +90,37 @@ rte_eal_hugepage_init(void)
 		return 0;
 	}
 
-	size = (internal_config.memory / mmu::huge_page_size) +
-		(internal_config.memory % mmu::huge_page_size) ? mmu::huge_page_size : 0;
-	addr = memory::alloc_huge_page(size);
-	physaddr = mmu::virt_to_phys(addr);
-	seg = &mcfg->memseg[0];
-	seg->addr = addr;
-	seg->phys_addr = physaddr;
-	seg->hugepage_sz = mmu::huge_page_size;
-	seg->len = size;
-	seg->nchannel = mcfg->nchannel;
-	seg->nrank = mcfg->nrank;
-	seg->socket_id = 0;
+	/* map all hugepages and sort them */
+	for (i = 0; i < internal_config.num_hugepage_sizes; i ++){
+		struct hugepage_info *hpi;
+		size_t alloc_size = 0;
+		int n = 10;
 
-	RTE_LOG(INFO, EAL, "Mapped memory segment %u @ %p: physaddr:0x%"
-		PRIx64", len %zu\n",
-		0, addr, physaddr, size);
+		hpi = &internal_config.hugepage_info[i];
+		for (j = 0; j < hpi->num_pages[0]; j++) {
+			struct rte_memseg *seg;
+			uint64_t physaddr;
+	
+			addr = memory::alloc_phys_contiguous_aligned(hpi->hugepage_sz * n, hpi->hugepage_sz);
+			seg = &mcfg->memseg[seg_idx++];
+			seg->addr = addr;
+			seg->phys_addr = mmu::virt_to_phys(addr);
+			seg->hugepage_sz = hpi->hugepage_sz;
+			seg->len = hpi->hugepage_sz * n;
+			seg->nchannel = mcfg->nchannel;
+			seg->nrank = mcfg->nrank;
+			seg->socket_id = 0;
+	
+			RTE_LOG(INFO, EAL, "Mapped memory segment %u @ %p: physaddr:0x%"
+				PRIx64", len %zu\n",
+				0, seg->addr, seg->phys_addr, seg->len);
+			if (total_mem >= internal_config.memory ||
+					seg_idx >= RTE_MAX_MEMSEG)
+				break;
+                        if (n > 1)
+                            n--;
+		}
+	}
 	return 0;
 }
 
