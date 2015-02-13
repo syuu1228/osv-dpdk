@@ -34,6 +34,10 @@
 #ifndef EAL_HUGEPAGES_H
 #define EAL_HUGEPAGES_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stddef.h>
 #include <stdint.h>
 #include <limits.h>
@@ -63,5 +67,9 @@ struct hugepage_file {
  * for the EAL to use
  */
 int eal_hugepage_info_init(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* EAL_HUGEPAGES_H */
