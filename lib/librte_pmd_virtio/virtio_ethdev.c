@@ -794,6 +794,13 @@ virtio_has_msix(const struct rte_pci_addr *loc)
 
 	return (d != NULL);
 }
+#elif defined(RTE_EXEC_ENV_OSVAPP)
+static int
+virtio_has_msix(const struct rte_pci_addr *loc __rte_unused)
+{
+	/* TODO: ask to OSv this NIC has MSI-X */
+	return 1;
+}
 #else
 static int
 virtio_has_msix(const struct rte_pci_addr *loc __rte_unused)
