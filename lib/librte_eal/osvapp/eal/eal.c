@@ -50,9 +50,7 @@
 #include <errno.h>
 #include <sys/mman.h>
 #include <sys/queue.h>
-#if defined(RTE_ARCH_X86_64) || defined(RTE_ARCH_I686)
 #include <sys/io.h>
-#endif
 
 #include <rte_common.h>
 #include <rte_debug.h>
@@ -353,16 +351,8 @@ eal_usage(const char *prgname)
 	eal_common_usage();
 	printf("EAL Linux options:\n"
 	       "  -d LIB.so    : add driver (can be used multiple times)\n"
-	       "  --"OPT_XEN_DOM0" : support application running on Xen Domain0 "
-			   "without hugetlbfs\n"
 	       "  --"OPT_SOCKET_MEM" : memory to allocate on specific\n"
 		   "                 sockets (use comma separated values)\n"
-	       "  --"OPT_HUGE_DIR"   : directory where hugetlbfs is mounted\n"
-	       "  --"OPT_FILE_PREFIX": prefix for hugepage filenames\n"
-	       "  --"OPT_BASE_VIRTADDR": specify base virtual address\n"
-	       "  --"OPT_VFIO_INTR": specify desired interrupt mode for VFIO "
-			   "(legacy|msi|msix)\n"
-	       "  --"OPT_CREATE_UIO_DEV": create /dev/uioX (usually done by hotplug)\n"
 	       "\n");
 	/* Allow the application to print its usage message too if hook is set */
 	if ( rte_application_usage_hook ) {
@@ -448,10 +438,8 @@ eal_parse_base_virtaddr(const char *arg)
 		return -1;
 
 	/* make sure we don't exceed 32-bit boundary on 32-bit target */
-#ifndef RTE_ARCH_64
 	if (addr >= UINTPTR_MAX)
 		return -1;
-#endif
 
 	/* align the addr on 16M boundary, 16MB is the minimum huge page
 	 * size on IBM Power architecture. If the addr is aligned to 16MB,
@@ -461,28 +449,6 @@ eal_parse_base_virtaddr(const char *arg)
 		RTE_PTR_ALIGN_CEIL((uintptr_t)addr, (size_t)RTE_PGSIZE_16M);
 
 	return 0;
-}
-
-static int
-eal_parse_vfio_intr(const char *mode)
-{
-	unsigned i;
-	static struct {
-		const char *name;
-		enum rte_intr_mode value;
-	} map[] = {
-		{ "legacy", RTE_INTR_MODE_LEGACY },
-		{ "msi", RTE_INTR_MODE_MSI },
-		{ "msix", RTE_INTR_MODE_MSIX },
-	};
-
-	for (i = 0; i < RTE_DIM(map); i++) {
-		if (!strcmp(mode, map[i].name)) {
-			internal_config.vfio_intr_mode = map[i].value;
-			return 0;
-		}
-	}
-	return -1;
 }
 
 static inline size_t
@@ -550,22 +516,6 @@ eal_parse_args(int argc, char **argv)
 			TAILQ_INSERT_TAIL(&solib_list, solib, next);
 			break;
 
-		/* long options */
-		case OPT_XEN_DOM0_NUM:
-			RTE_LOG(ERR, EAL, "Can't support DPDK app "
-				"running on Dom0, please configure"
-				" RTE_LIBRTE_XEN_DOM0=y\n");
-			return -1;
-			break;
-
-		case OPT_HUGE_DIR_NUM:
-			internal_config.hugepage_dir = optarg;
-			break;
-
-		case OPT_FILE_PREFIX_NUM:
-			internal_config.hugefile_prefix = optarg;
-			break;
-
 		case OPT_SOCKET_MEM_NUM:
 			if (eal_parse_socket_mem(optarg) < 0) {
 				RTE_LOG(ERR, EAL, "invalid parameters for --"
@@ -582,19 +532,6 @@ eal_parse_args(int argc, char **argv)
 				eal_usage(prgname);
 				return -1;
 			}
-			break;
-
-		case OPT_VFIO_INTR_NUM:
-			if (eal_parse_vfio_intr(optarg) < 0) {
-				RTE_LOG(ERR, EAL, "invalid parameters for --"
-						OPT_VFIO_INTR "\n");
-				eal_usage(prgname);
-				return -1;
-			}
-			break;
-
-		case OPT_CREATE_UIO_DEV_NUM:
-			internal_config.create_uio_dev = 1;
 			break;
 
 		default:
@@ -745,11 +682,6 @@ rte_eal_init(int argc, char **argv)
 	if (rte_eal_pci_init() < 0)
 		rte_panic("Cannot init PCI\n");
 
-#ifdef RTE_LIBRTE_IVSHMEM
-	if (rte_eal_ivshmem_init() < 0)
-		rte_panic("Cannot init IVSHMEM\n");
-#endif
-
 	if (rte_eal_memory_init() < 0)
 		rte_panic("Cannot init memory\n");
 
@@ -761,11 +693,6 @@ rte_eal_init(int argc, char **argv)
 
 	if (rte_eal_tailqs_init() < 0)
 		rte_panic("Cannot init tail queues for objects\n");
-
-#ifdef RTE_LIBRTE_IVSHMEM
-	if (rte_eal_ivshmem_obj_init() < 0)
-		rte_panic("Cannot init IVSHMEM objects\n");
-#endif
 
 	if (rte_eal_log_init(logid, internal_config.syslog_facility) < 0)
 		rte_panic("Cannot init logs\n");
