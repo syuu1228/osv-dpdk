@@ -114,31 +114,6 @@ eal_thread_set_affinity(void)
  * CPU_ISSET_S(),  CPU_AND_S(), CPU_OR_S(), CPU_XOR_S(), and CPU_EQUAL_S()
  * first appeared in glibc 2.7.
  */
-#undef CPU_ALLOC
-#if defined(CPU_ALLOC)
-	size_t size;
-	cpu_set_t *cpusetp;
-
-	cpusetp = CPU_ALLOC(RTE_MAX_LCORE);
-	if (cpusetp == NULL) {
-		RTE_LOG(ERR, EAL, "CPU_ALLOC failed\n");
-		return -1;
-	}
-
-	size = CPU_ALLOC_SIZE(RTE_MAX_LCORE);
-	CPU_ZERO_S(size, cpusetp);
-	CPU_SET_S(rte_lcore_id(), size, cpusetp);
-
-	thread = pthread_self();
-	s = pthread_setaffinity_np(thread, size, cpusetp);
-	if (s != 0) {
-		RTE_LOG(ERR, EAL, "pthread_setaffinity_np failed\n");
-		CPU_FREE(cpusetp);
-		return -1;
-	}
-
-	CPU_FREE(cpusetp);
-#else /* CPU_ALLOC */
 	cpu_set_t cpuset;
 	CPU_ZERO( &cpuset );
 	CPU_SET( rte_lcore_id(), &cpuset );
@@ -149,7 +124,6 @@ eal_thread_set_affinity(void)
 		RTE_LOG(ERR, EAL, "pthread_setaffinity_np failed\n");
 		return -1;
 	}
-#endif
 	return 0;
 }
 
