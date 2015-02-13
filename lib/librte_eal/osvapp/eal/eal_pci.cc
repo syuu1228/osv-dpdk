@@ -217,8 +217,8 @@ rte_eal_pci_init(void)
 				rte_dev->mem_resource[i].addr = const_cast<void *>(bar->get_mmio());
 			} else {
 				rte_dev->mem_resource[i].len = bar->get_size();
-				rte_dev->mem_resource[i].phys_addr = bar->get_addr_lo();
-				rte_dev->mem_resource[i].addr = NULL;
+				rte_dev->mem_resource[i].phys_addr = 0;
+				rte_dev->mem_resource[i].addr = reinterpret_cast<void *>(bar->get_addr_lo());
 			}
 		}
 
