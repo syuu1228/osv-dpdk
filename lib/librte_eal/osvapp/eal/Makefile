@@ -56,7 +56,7 @@ CXXFLAGS += $(INC_FLAGS) -std=gnu++11 -O3
 
 # specific to osvapp exec-env
 SRCS-$(CONFIG_RTE_LIBRTE_EAL_OSVAPP) := eal.c
-SRCS-$(CONFIG_RTE_LIBRTE_EAL_OSVAPP) += eal_hugepage_info.c
+SRCS-$(CONFIG_RTE_LIBRTE_EAL_OSVAPP) += eal_hugepage_info.cc
 SRCS-$(CONFIG_RTE_LIBRTE_EAL_OSVAPP) += eal_memory.cc
 SRCS-$(CONFIG_RTE_LIBRTE_EAL_OSVAPP) += eal_thread.c
 SRCS-$(CONFIG_RTE_LIBRTE_EAL_OSVAPP) += eal_log.c
