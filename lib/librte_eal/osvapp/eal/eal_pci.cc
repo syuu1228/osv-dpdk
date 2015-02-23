@@ -46,7 +46,8 @@
 #include "eal_filesystem.h"
 #include "eal_private.h"
 
-#include "drivers/driver.hh"
+#include "drivers/device.hh"
+#include "drivers/pci-device.hh"
 
 /**
  * @file
@@ -84,18 +85,7 @@ static struct mapped_pci_res_list *pci_res_list = NULL;
 static int
 pci_unbind_kernel_driver(struct rte_pci_device *rte_dev)
 {
-	auto dm = device_manager::instance();
-	dm->for_each_device([rte_dev] (hw_device* dev) {
-		u8 bus, device, func;
-		auto pci_dev = static_cast<pci::device*>(dev);
-		pci_dev->get_bdf(bus, device, func);
-		if (rte_dev->addr.bus == bus &&
-		    rte_dev->addr.devid == device &&
-		    rte_dev->addr.function == func) {
-		        delete pci_dev;
-		}
-	});
-	return 0;
+	return -1; /* XXX: implement it */
 }
 
 /* Compare two PCI device addresses. */
@@ -183,8 +173,8 @@ rte_eal_pci_init(void)
 	if (internal_config.no_pci)
 		return 0;
 
-	auto dm = device_manager::instance();
-	dm->for_each_device([] (hw_device* dev) {
+	auto dm = hw::device_manager::instance();
+	dm->for_each_device([] (hw::hw_device* dev) {
 		u8 bus, device, func;
 		auto pci_dev = static_cast<pci::device*>(dev);
 		auto rte_dev = new rte_pci_device();
