@@ -94,7 +94,7 @@ rte_eal_hugepage_init(void)
 	for (i = 0; i < internal_config.num_hugepage_sizes; i ++){
 		struct hugepage_info *hpi;
 		size_t alloc_size = 0;
-		int n = 10;
+		int n = 16;
 
 		hpi = &internal_config.hugepage_info[i];
 		for (j = 0; j < hpi->num_pages[0]; j++) {
