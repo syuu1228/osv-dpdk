@@ -35,7 +35,6 @@
 
 .PHONY: module
 module:
-	./build.sh
 
 RTE_SDK := $(CURDIR)
 export RTE_SDK
