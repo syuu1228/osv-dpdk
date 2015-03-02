@@ -114,6 +114,12 @@ CONFIG_RTE_PCI_MAX_READ_REQUEST_SIZE=0
 CONFIG_RTE_LIBRTE_EAL_OSVAPP=y
 
 #
+# Compile OSv specific parameters
+#
+CONFIG_RTE_HUGEPAGE_SIZE=1024 * 1024 * 128
+CONFIG_RTE_NUM_PAGES=8
+
+#
 # Compile Environment Abstraction Layer to support Vmware TSC map
 #
 CONFIG_RTE_LIBRTE_EAL_VMWARE_TSC_MAP_SUPPORT=y

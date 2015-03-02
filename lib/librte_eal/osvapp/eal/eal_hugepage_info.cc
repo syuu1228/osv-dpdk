@@ -64,22 +64,16 @@
 #include <osv/types.h>
 #include <osv/mmu-defs.hh>
 
-#define DEFAULT_NUM_PAGES 32
-
-/*
- * when we initialize the hugepage info, everything goes
- * to socket 0 by default. it will later get sorted by memory
- * initialization procedure.
- */
 int
 eal_hugepage_info_init(void)
 {
 	struct hugepage_info *hpi = &internal_config.hugepage_info[0];
 
 	internal_config.num_hugepage_sizes = 1;
-	hpi->hugepage_sz = mmu::huge_page_size;
+	hpi->hugepage_sz = RTE_HUGEPAGE_SIZE;
 	hpi->hugedir = NULL;
-	hpi->num_pages[0] = DEFAULT_NUM_PAGES;
+	hpi->num_pages[0] = RTE_NUM_PAGES;
 	hpi->lock_descriptor = -1;
+
 	return 0;
 }

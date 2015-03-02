@@ -45,17 +45,8 @@
 #include "eal_internal_cfg.h"
 #include "eal_filesystem.h"
 
-#include <assert.h>
-#include <osv/types.h>
-#include <osv/mmu-defs.hh>
-#include <osv/pagealloc.hh>
-
-namespace memory {
-void* alloc_phys_contiguous_aligned(size_t sz, size_t align);
-};
-namespace mmu {
-phys virt_to_phys(void *virt);
-};
+#include <osv/contiguous_alloc.hh>
+#include <osv/virt_to_phys.hh>
 
 /*
  * Get physical address of any mapped virtual address in the current process.
@@ -94,19 +85,20 @@ rte_eal_hugepage_init(void)
 	for (i = 0; i < internal_config.num_hugepage_sizes; i ++){
 		struct hugepage_info *hpi;
 		size_t alloc_size = 0;
-		int n = 16;
 
 		hpi = &internal_config.hugepage_info[i];
 		for (j = 0; j < hpi->num_pages[0]; j++) {
 			struct rte_memseg *seg;
 			uint64_t physaddr;
 	
-			addr = memory::alloc_phys_contiguous_aligned(hpi->hugepage_sz * n, hpi->hugepage_sz);
+			addr = memory::alloc_phys_contiguous_aligned(hpi->hugepage_sz, hpi->hugepage_sz, false);
+			if (addr == nullptr)
+				break;
 			seg = &mcfg->memseg[seg_idx++];
 			seg->addr = addr;
 			seg->phys_addr = mmu::virt_to_phys(addr);
 			seg->hugepage_sz = hpi->hugepage_sz;
-			seg->len = hpi->hugepage_sz * n;
+			seg->len = hpi->hugepage_sz;
 			seg->nchannel = mcfg->nchannel;
 			seg->nrank = mcfg->nrank;
 			seg->socket_id = 0;
@@ -117,8 +109,6 @@ rte_eal_hugepage_init(void)
 			if (total_mem >= internal_config.memory ||
 					seg_idx >= RTE_MAX_MEMSEG)
 				break;
-                        if (n > 1)
-                            n--;
 		}
 	}
 	return 0;
