@@ -34,6 +34,10 @@
 #ifndef EAL_THREAD_H
 #define EAL_THREAD_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <rte_lcore.h>
 
 /**
@@ -96,5 +100,9 @@ int eal_cpuset_socket_id(rte_cpuset_t *cpusetp);
  */
 int
 eal_thread_dump_affinity(char *str, unsigned size);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* EAL_THREAD_H */
