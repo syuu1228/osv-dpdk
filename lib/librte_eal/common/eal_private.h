@@ -34,6 +34,10 @@
 #ifndef _EAL_PRIVATE_H_
 #define _EAL_PRIVATE_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdio.h>
 
 /**
@@ -231,5 +235,9 @@ int rte_eal_dev_init(void);
  *	1  means the module loaded
  */
 int rte_eal_check_module(const char *module_name);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _EAL_PRIVATE_H_ */
